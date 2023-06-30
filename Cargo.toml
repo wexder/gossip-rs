@@ -3,6 +3,11 @@ name = "gossip"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+# echo = []
+# generate = []
+broadcast = []
+
 [dependencies]
 anyhow = "1.0.71"
 serde = { version = "1.0.164", features = ["derive"] }
