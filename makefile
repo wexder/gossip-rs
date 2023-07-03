@@ -18,3 +18,5 @@ run-broadcast: build-broadcast
 
 run-broadcast-nf: build-broadcast
 	./maelstrom/maelstrom test -w broadcast --bin target/debug/gossip --node-count 5 --time-limit 5 --rate 10 --nemesis partition
+
+run-all: run-echo run-ids run-broadcast run-broadcast-nf

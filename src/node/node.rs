@@ -1,11 +1,8 @@
 use anyhow::Context;
-use serde::Serialize;
 
-use crate::node::message::{Message, Reply, Request};
+use crate::node::message::{Body, BodyType, Message};
 
-use std::{io, sync::Mutex};
-
-use super::message::RequestType;
+use std::io;
 
 pub trait Node<R, W>: Sized
 where
@@ -19,21 +16,20 @@ where
             .read_line(&mut buf)
             .context("Cannot read first line")?;
 
-        let msg: Message<Request> =
-            serde_json::from_str(&buf).context("Cannot parse init message")?;
+        let msg: Message = serde_json::from_str(&buf).context("Cannot parse init message")?;
 
         let node_id = match msg.body.tp {
-            RequestType::Init {
+            BodyType::Init {
                 node_id,
                 node_ids: _,
             } => {
                 let resp = Message {
                     src: msg.dest,
                     dest: msg.src,
-                    body: Reply {
+                    body: Body {
                         msg_id: msg.body.msg_id + 1,
-                        in_reply_to: msg.body.msg_id,
-                        tp: super::message::ReplyType::InitOk,
+                        in_reply_to: Some(msg.body.msg_id),
+                        tp: BodyType::InitOk,
                     },
                 };
                 let resp = serde_json::to_string(&resp)
@@ -51,12 +47,16 @@ where
         Ok(Self::new(node_id))
     }
 
-    fn send_message<T: Serialize>(&self, msg: &Message<T>, output: &mut W) -> anyhow::Result<()> {
+    fn send_message(&self, msg: &Message, output: &mut W) -> anyhow::Result<()> {
         serde_json::to_writer(&mut *output, msg).context("Cannot jsonifie reply message")?;
         output.write(b"\n").context("Cannot end the message")?;
         Ok(())
     }
 
     fn new(id: String) -> Self;
-    fn step(&mut self, msg: Message<Request>, output: &mut W) -> anyhow::Result<()>;
+    fn step(&mut self, msg: Message, output: &mut W) -> anyhow::Result<()>;
+
+    fn reply(&mut self, msg: Message, output: &mut W) -> anyhow::Result<()>;
+
+    fn get_id(&self) -> String;
 }

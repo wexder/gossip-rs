@@ -11,7 +11,8 @@ mod echo;
 mod broadcast;
 
 use anyhow::Context;
-use node::message::{Message, Request};
+use node::message::Message;
+use node::server::Server;
 use std::io;
 
 fn main() -> anyhow::Result<()> {
@@ -25,16 +26,8 @@ fn main() -> anyhow::Result<()> {
     let mut node = broadcast::BroadcastNode::init(&mut stdin, &mut stdout)?;
 
     drop(stdin);
-    let stdin = io::stdin();
-
-    for line in stdin.lines() {
-        let line = line?;
-        if let Ok(msg) = serde_json::from_str::<Message<Request>>(line.as_str()) {
-            node.step(msg.clone(), &mut stdout)
-                .context("failed to step")?;
-        } else {
-        };
-    }
+    let mut server = Server::new(node);
+    server.start()?;
 
     Ok(())
 }

@@ -1,42 +1,65 @@
-use std::io::{self, Stdout};
+use std::{io, marker::PhantomData};
 
 use crate::node::{
-    message::{Message, Reply, ReplyType, Request, RequestType},
+    message::{Body, BodyType, Message},
     node::Node,
 };
 use uuid::Uuid;
 
 #[derive(Default)]
-pub struct GenerateNode {
+pub struct GenerateNode<R: io::BufRead, W: io::Write> {
     id: String,
+
+    _phantom_w: PhantomData<W>,
+    _phantom_r: PhantomData<R>,
 }
 
-impl Node<io::StdinLock<'static>, Stdout> for GenerateNode {
+impl<R, W> Node<R, W> for GenerateNode<R, W>
+where
+    R: io::BufRead,
+    W: io::Write,
+{
     fn new(id: String) -> Self {
-        Self { id }
+        Self {
+            id,
+            _phantom_w: PhantomData,
+            _phantom_r: PhantomData,
+        }
     }
 
-    fn step(&mut self, msg: Message<Request>, output: &mut Stdout) -> anyhow::Result<()> {
+    fn step(&mut self, msg: Message, output: &mut W) -> anyhow::Result<()> {
         match msg.body.tp {
-            RequestType::Generate => self.generate(msg, output),
+            BodyType::Generate => self.generate(msg, output),
             _ => anyhow::bail!("Unknow body type"),
         }
     }
+
+    fn reply(&mut self, msg: Message, output: &mut W) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    fn get_id(&self) -> String {
+        self.id.clone()
+    }
 }
 
-impl GenerateNode {
-    fn generate(&self, msg: Message<Request>, output: &mut Stdout) -> anyhow::Result<()> {
+impl<R, W> GenerateNode<R, W>
+where
+    R: io::BufRead,
+    W: io::Write,
+{
+    fn generate(&self, msg: Message, output: &mut W) -> anyhow::Result<()> {
         match msg.body.tp {
-            RequestType::Generate => {}
+            BodyType::Generate => {}
             _ => anyhow::bail!("Msg has to be generate"),
         };
         let resp = Message {
             src: msg.dest,
             dest: msg.src,
-            body: Reply {
+            body: Body {
                 msg_id: msg.body.msg_id,
-                in_reply_to: msg.body.msg_id,
-                tp: ReplyType::GenerateOk { id: Uuid::new_v4() },
+                in_reply_to: Some(msg.body.msg_id),
+                tp: BodyType::GenerateOk { id: Uuid::new_v4() },
             },
         };
 
