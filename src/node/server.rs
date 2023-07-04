@@ -23,6 +23,7 @@ impl<T: Node<io::StdinLock<'static>, io::Stdout>> Server<T> {
     pub fn start(&mut self) -> anyhow::Result<()> {
         let mut stdout = io::stdout();
         let stdin = io::stdin();
+        let id = self.node.get_id();
 
         let (tx, receiver): (Sender<Message>, Receiver<Message>) = mpsc::channel();
 
@@ -36,24 +37,23 @@ impl<T: Node<io::StdinLock<'static>, io::Stdout>> Server<T> {
             }
         });
 
-        let ticker_tx = tx.clone();
-        let id = self.node.get_id();
+        let sync_ticker_tx = tx.clone();
         thread::spawn(move || {
-            let seconds = Duration::from_millis(500);
+            let seconds = Duration::from_millis(250);
 
             loop {
                 let start = SystemTime::now();
-                thread::sleep(Duration::from_millis(500));
+                thread::sleep(Duration::from_millis(250));
                 match start.elapsed() {
                     Ok(elapsed) if elapsed > seconds => {
-                        ticker_tx
+                        sync_ticker_tx
                             .send(Message {
                                 src: "ticker".to_string(),
                                 dest: id.clone(),
                                 body: Body {
                                     msg_id: 0,
                                     in_reply_to: None,
-                                    tp: BodyType::Sync,
+                                    tp: BodyType::SyncTick,
                                 },
                             })
                             .unwrap();

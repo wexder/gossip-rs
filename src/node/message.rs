@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -37,6 +37,10 @@ pub enum BodyType {
     Broadcast {
         message: i32,
     },
+    BatchBroadcast {
+        messages: Vec<i32>,
+    },
+
     Read,
 
     InitOk,
@@ -48,9 +52,9 @@ pub enum BodyType {
     },
     BroadcastOk,
     ReadOk {
-        messages: Vec<i32>,
+        messages: BTreeSet<i32>,
     },
     TopologyOk,
 
-    Sync,
+    SyncTick,
 }
