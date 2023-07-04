@@ -39,11 +39,11 @@ impl<T: Node<io::StdinLock<'static>, io::Stdout>> Server<T> {
 
         let sync_ticker_tx = tx.clone();
         thread::spawn(move || {
-            let seconds = Duration::from_millis(250);
+            let seconds = Duration::from_millis(100);
 
             loop {
                 let start = SystemTime::now();
-                thread::sleep(Duration::from_millis(250));
+                thread::sleep(Duration::from_millis(100));
                 match start.elapsed() {
                     Ok(elapsed) if elapsed > seconds => {
                         sync_ticker_tx

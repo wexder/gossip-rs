@@ -15,7 +15,6 @@ pub struct BroadcastNode<R: io::BufRead, W: io::Write> {
     id: String,
     nodes: Vec<String>,
     messages: BTreeSet<i32>,
-    neighbour_status: HashMap<String, bool>,
     uncomfirmed: HashMap<UncomfirmedMsgKey, Vec<Message>>,
 
     _phantom_w: PhantomData<W>,
@@ -38,8 +37,6 @@ where
             nodes: Vec::new(),
             messages: BTreeSet::new(),
             uncomfirmed: HashMap::new(),
-
-            neighbour_status: HashMap::new(),
 
             _phantom_w: PhantomData,
             _phantom_r: PhantomData,
@@ -90,10 +87,6 @@ where
             _ => anyhow::bail!("Msg has to be topology"),
         };
         self.nodes = topology.get(&self.id).unwrap().to_vec();
-        // TODO remove clone
-        for node in self.nodes.clone() {
-            self.neighbour_status.insert(node.clone(), false);
-        }
         let resp = Message {
             src: msg.dest,
             dest: msg.src,
@@ -182,37 +175,6 @@ where
     }
 
     fn broadcast_ok(&mut self, msg: Message, _: &mut W) -> anyhow::Result<()> {
-        match msg.body.tp {
-            BodyType::BroadcastOk => {}
-            _ => anyhow::bail!("Msg has to be broadcast"),
-        };
-
-        eprintln!("BroadcastOk");
-
-        let key = UncomfirmedMsgKey { node_id: msg.src };
-        let empty = &Vec::new();
-        let old = self.uncomfirmed.get(&key).unwrap_or(empty);
-        let new: Vec<Message> = old
-            .to_vec()
-            .into_iter()
-            .filter(|m| {
-                m.body.msg_id
-                    != msg
-                        .body
-                        .in_reply_to
-                        .context("Failed to filter on broadcast_ok")
-                        .unwrap()
-            })
-            .collect();
-
-        eprintln!(
-            "Ok {} {} {} {}",
-            self.id,
-            self.uncomfirmed.len(),
-            old.len(),
-            new.len()
-        );
-        self.uncomfirmed.insert(key, new);
         Ok(())
     }
 

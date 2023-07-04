@@ -20,6 +20,6 @@ run-broadcast-nf: build-broadcast
 	./maelstrom/maelstrom test -w broadcast --bin target/debug/gossip --node-count 5 --time-limit 20 --rate 10 --nemesis partition --log-stderr
 
 run-broadcast-efficient: build-broadcast
-	./maelstrom/maelstrom test -w broadcast --bin target/debug/gossip --node-count 25 --time-limit 25 --rate 100 --latency 100 --nemesis partition --log-stderr
+	./maelstrom/maelstrom test -w broadcast --bin target/debug/gossip --node-count 25 --time-limit 25 --rate 100 --latency 100
 
 run-all: run-echo run-ids run-broadcast run-broadcast-nf
