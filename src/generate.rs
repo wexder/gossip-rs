@@ -30,7 +30,7 @@ where
     fn step(&mut self, msg: Message, output: &mut W) -> anyhow::Result<()> {
         match msg.body.tp {
             BodyType::Generate => self.generate(msg, output),
-            _ => anyhow::bail!("Unknow body type"),
+            _ => Ok(()),
         }
     }
 

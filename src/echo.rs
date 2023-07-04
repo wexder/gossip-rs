@@ -28,7 +28,7 @@ where
     fn step(&mut self, msg: Message, output: &mut W) -> anyhow::Result<()> {
         match msg.body.tp {
             BodyType::Echo { echo: _ } => self.echo(msg, output),
-            _ => anyhow::bail!("Unknow body type"),
+            _ => Ok(()),
         }
     }
 

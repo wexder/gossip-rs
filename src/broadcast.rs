@@ -57,7 +57,7 @@ where
             BodyType::Broadcast { message: _ } => self.broadcast(msg, output),
             BodyType::BatchBroadcast { messages: _ } => self.batch_broadcast(msg, output),
             BodyType::SyncTick => self.sync(msg, output),
-            _ => anyhow::bail!("Unknow body type"),
+            _ => Ok(()),
         }?;
 
         Ok(())
